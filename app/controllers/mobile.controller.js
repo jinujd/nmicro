@@ -24,16 +24,12 @@ function mobileController(methods, options) {
 	const salt = bcrypt.genSaltSync(10);
 	const Sequelize = require('sequelize');
 	const constants = require("../helpers/constants")
-	const jwt = require('jsonwebtoken');
-	var paramsConfig = require('../../config/params.config');
+	const jwt = require('jsonwebtoken'); 
 
-
-	const JWT_KEY = paramsConfig.development.jwt.secret;
+ 
 	var config = require('../../config/app.config.js');
 	const profileConfig = config.profile;
-
-	var smsConfig = config.sms;
-	var msg91 = require("msg91")(smsConfig.key, smsConfig.fromNo, smsConfig.route);
+ 
 	var otpConfig = config.otp;
 	// this.getMulter = (multer) =>{
 	// 	var upload = multer({ dest: 'uploads/' });

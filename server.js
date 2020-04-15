@@ -7,14 +7,9 @@ var argv = consoleArguments(process.argv.slice(2));
 var env = process.env.NODE_ENV;
 env = env ? env : "development";
 console.log("Environment is " + env);
-const dbConfig = require('./config/database.config.js')[env];
-
-if (!dbConfig) {
-  console.log("Database configuaration for environment " + env + " is not in the db config file. Exiting...");
-  process.exit(0);
-}
-const params = require('./config/params.config');
-var gateway = require('./app/components/gateway.component');
+var dbConfig = null; 
+var params = null;
+var gateway = null;
 const Sequelize = require('sequelize');
 const mongoose = require('mongoose');
 const Controller = require('./base/controller.js');
@@ -33,6 +28,19 @@ app.use(bodyParser.urlencoded({
 }))
 
 app.use(bodyParser.json());
+function loadConfigForEnv(configFilePath,env) {
+  var ret = {};
+  var config = require(`./config/${configFilePath}`);
+  
+    if (!config) {
+      config = {}; 
+    }
+    if(!config[env]) {
+      config[env] = {};
+    }
+    config = config[env];
+    return config;
+}
 module.exports = {
   connectToDb: function(callback) {  
     var that = this;
@@ -47,6 +55,7 @@ module.exports = {
 },
 connectToMysqlDb: function (dbConfig,callback) {
  if(!dbConfig) {
+    console.info("No mysql configuration found");
     (callback).call();
     return;
  }
@@ -59,17 +68,19 @@ connectToMysqlDb: function (dbConfig,callback) {
        callback(sequelize);
      }
    })
-   .catch(err => {
-     console.error('Unable to connect to sql database:', err);
-     process.exit();
+   .catch(err => { 
+     console.warn('Could not connect to sql database.', err); 
+     (callback.call)(null); 
    });
 },
 connectToMongoDb: function(dbConfig, callback) { 
   if(!dbConfig) {
+    console.info("No mongodb configuration found");
     (callback).call();
     return;
   } 
   var config = dbConfig;
+  console.log("Mongodb config is "+JSON.stringify(dbConfig));
   var url = config.url;
   delete config.url; 
   mongoose.connect(url, config).then(() => {
@@ -78,17 +89,20 @@ connectToMongoDb: function(dbConfig, callback) {
       (callback.call)(null,mongoose);
     }
   }).catch(err => {
-    console.log('Could not connect to mongodb. Exiting now...', err);
-    process.exit();
+    console.warn('Could not connect to mongodb.', err); 
+    (callback.call)(null);
   });
 },
   methods: {
     loadController: function (controller, options) {
-      var config = params[env] ? params[env] : {
-        jwt: {
-          secret: "myapp"
-        }
+      var defaultJWTSecret = "myapp";
+      var defaultJWTConfig =  {
+        secret: defaultJWTSecret
       };
+      var config = params ? params : defaultJWTConfig;
+      config.jwt = config.jwt?config.jwt: defaultJWTConfig;
+      config.jwt.secret = config.jwt.secret?config.jwt.secret: defaultJWTSecret;
+       
       config.options = options;
       var controllerBaseObj = new Controller(controller, app, config);
 
@@ -104,18 +118,36 @@ connectToMongoDb: function(dbConfig, callback) {
       return controller;
     }
   },
-  start: function (serviceName, routes, servicePort) {
+  start: function (serviceName, routes, servicePort,serviceConfig) {
+
+
+    var port = process.env.port ? process.env.port : null;
+    port = port ? port : argv.port ? argv.port : null;
+    port = port? port : servicePort;
+    if (!port) {
+      console.error("PORT not set for " + serviceName + " service. Exiting...");
+
+      process.exit(0);
+    }
+
+    if(!serviceConfig) {
+      serviceConfig = { };
+    }
+    if(!serviceConfig.db) {
+      serviceConfig.db = "database.config";
+    }
+    if(!serviceConfig.params) {
+      serviceConfig.app = "app.config";
+    }
+ 
+    dbConfig = loadConfigForEnv(serviceConfig.db,env);
+    params = loadConfigForEnv(serviceConfig.app,env); 
+    var gatewayConfig = params.gateway?params.gateway:{url:""};
+    gateway = require('./app/components/gateway.component')(params);
+     
     var that = this;
     this.connectToDb(function (db) {
       var options = db;
-      var port = process.env.port ? process.env.port : null;
-      port = port ? port : argv.port ? argv.port : null;
-      port = port? port : servicePort;
-      if (!port) {
-        console.log("PORT not set for " + serviceName + " service");
-
-        process.exit(0);
-      }
       if (routes) {
         var len = routes.length ? routes.length : 0;
         var i = 0;

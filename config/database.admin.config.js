@@ -4,7 +4,7 @@ module.exports = {
       // database: 'suchitwa',
       // username: 'postgres',
       // password: 'suchitwa'
-      database: 'collygo',
+      database: 'collygo_test',
       username: 'root',
       password: '', 
       host: 'localhost',
@@ -18,7 +18,7 @@ module.exports = {
     },
     mongo: 
       { 
-        url:"mongosdb+srv://root:root@cluster0-mwmnq.mongodb.net/test?retryWrites=true&w=majority",
+        url:"mongodb+srv://root:root@cluster0-mwmnq.mongodb.net/test?retryWrites=true&w=majority",
         useNewUrlParser: true,
         useUnifiedTopology: true
   

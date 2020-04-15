@@ -1,7 +1,6 @@
 const stringify = require('json-stringify-safe');
 var multer = require('multer'); 
-module.exports = function(name,app,config) {
-    
+module.exports = function(name,app,config) { 
     const jwt = require('jsonwebtoken');
     this.options = {auth:true};
     var that = this;
@@ -15,14 +14,12 @@ module.exports = function(name,app,config) {
     this.loadModel =  function(modelName) { 
         var isMongooseModel = modelName.endsWith('.mongoose');
         var path  = '../app/models/'+modelName+'.model.js'; 
-        if(!config.options.mongoose) {
-            console.log("Mongoose is empty..");
-        }
+         
         var connector = isMongooseModel?config.options.mongoose:config.options.sequelize;
        
         var model = connector?require(path)(connector):null;
         if(!model) {
-            console.log("Failed to load model "+modelName);
+            console.warn("Failed to load model "+modelName);
         }
         return model;
     };
