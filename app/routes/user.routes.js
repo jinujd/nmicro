@@ -2,7 +2,6 @@ module.exports = (app, methods, options) => {
     const admin = methods.loadController('admin', options);
     const mobile = methods.loadController('mobile', options);
 
- 
     mobile.methods.post('/users/login',mobile.login, {auth:false});
 
     mobile.methods.post('/users/send-otp',mobile.sendOtp, {auth:false});
@@ -19,9 +18,11 @@ module.exports = (app, methods, options) => {
             auth: true
         });
        
-        mobile.methods.post('/main-surveys', mobile.attendSurvey, {
+        mobile.methods.post('/main-surveys/:id', mobile.attendSurvey, {
             auth: true, 
-            // multer : mobile.getMulter
+        });
+        mobile.methods.post('/main-surveys', mobile.attendSurvey, {
+            auth: false,  
         });
         mobile.methods.post('/main-surveys/common-details', mobile.mainSurveyCommonDetails, {
             auth: true

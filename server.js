@@ -1,4 +1,5 @@
-const express = require('express');
+const express = require('express'); 
+var requestUuid = require('express-request-id')();
 var cors = require('cors');
 const bodyParser = require('body-parser');
 var consoleArguments = require('minimist');
@@ -22,6 +23,7 @@ var sequelize = null;
 const app = express();
 
 app.use(cors());
+app.use(requestUuid);
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
   extended: true

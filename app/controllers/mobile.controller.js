@@ -31,14 +31,14 @@ function mobileController(methods, options) {
 	const profileConfig = config.profile;
  
 	var otpConfig = config.otp;
-	// this.getMulter = (multer) =>{
-	// 	var upload = multer({ dest: 'uploads/' });
-	// 	upload = upload.single('avatar');
-	// 	console.log("upload")
-	// 	console.log(upload)
-	// 	console.log("upload")
-	// 	return upload; 
-	//   }
+	this.getMulter = (multer) =>{
+		var upload = multer({ dest: 'uploads/' });
+		upload = upload.single('avatar');
+		console.log("upload")
+		console.log(upload)
+		console.log("upload")
+		return upload; 
+	  }
 
 	this.appListDistrict = async (req, res) => {
 		let params = req.query;
@@ -1391,196 +1391,9 @@ function mobileController(methods, options) {
 				message: "Common details"
 			});
 		},
-		this.attendSurvey = async function (req, res) {
-			const Op = require('sequelize').Op;
-
-			var errors = [];
-			let surveyArray = [];
-			let item = req.body;
-			let userData = req.identity;
-			let surveyorAccountId = userData.data.id;
-			console.log("req.body")
-			console.log(JSON.stringify(req.body))
-			console.log("req.body")
-			// let item = params.body;
-			// await Promise.all(attendedSurveys.map(async (item) => {
-			let surveyObj = {};
-			let officePlaceName = "";
-			let officePostOfficeName = "";
-			let officePinCode = "";
-			console.log("item")
-			console.log(item)
-			console.log("item")
-			surveyObj.district_id = item.district_id;
-			surveyObj.lsgi_type_id = item.lsgi_type_id;
-			surveyObj.lat = item.lat;
-			surveyObj.lng = item.lng;
-			if (item.lsgi_block_id) {
-				surveyObj.lsgi_block_id = item.lsgi_block_id;
-			}
-			surveyObj.lsgi_id = item.lsgi_id;
-			surveyObj.office_name = item.office_name;
-			surveyObj.office_type_id = item.office_type_id;
-
-			surveyObj.phone = item.phone;
-			surveyObj.email = item.email;
-			surveyObj.lead_person_name = item.lead_person_name;
-			surveyObj.lead_person_designation = item.lead_person_designation;
-			surveyObj.informer_name = item.informer_name;
-			surveyObj.informer_designation = item.informer_designation;
-			surveyObj.informer_phone = item.informer_phone;
-			officePlaceName = item.office_place_name;
-			officePostOfficeName = item.office_post_office_name;
-			officePinCode = item.office_pin_ode;
-			// surveyObj.address = officePlaceName + "," + officePostOfficeName + "," + officePinCode;
-			surveyObj.answers = item.answers
-			surveyObj.survey_date = item.survey_date;
-			surveyObj.surveyor_account_id = surveyorAccountId
-			surveyObj.status = 1
-			// surveyArray.push(surveyObj);
-
-			// }));
-
-			// let result = await Survey.bulkCreate(surveyArray);
-			let result = await Survey.create(surveyObj);
-
-			let answerAllArray = [];
-
-			// await Promise.all(surveyArray.map(async (item) => {
-			let points = 0;
-
-			let answersArray = [];
-			let surveyId = result.dataValues.id;
-			answersArray = item.answers;
-			surveyObj.id = surveyId;
-
-			await Promise.all(answersArray.map(async (item1) => {
-
-				let obj = {};
-				obj.survey_id = surveyId;
-				obj.question_id = item1.id;
-				if (item1.answer) {
-					obj.answer = item1.answer;
-				}
-				if (item1.type === constants.ANSWER_TYPE_OPTION) {
-					let optionObj = item1.options.find(o => o.is_selected === constants.IS_SELECTED_TRUE);
-					if (optionObj && optionObj !== null) {
-						obj.question_option_id = optionObj.id;
-						obj.answer = optionObj.value;
-
-						let mark = await QuestionOption.findAll({
-							raw: true,
-							limit: 1,
-							attributes: ['id', 'question_id', 'points'],
-
-							where: {
-								question_id: obj.question_id,
-								id: obj.question_option_id,
-								value: obj.answer,
-								status: 1
-							}
-						})
-							.catch(err => {
-								return res.send({
-									success: 0,
-									message: 'Something went wrong while fetching question option data',
-									error: err
-								})
-
-
-							})
-
-						if (mark[0]) {
-							obj.point = mark[0].points;
-							points = points + mark[0].points;
-						} else {
-							obj.point = 0;
-						}
-					} else {
-						obj.point = 0;
-					}
-				} else if (item1.type === constants.ANSWER_TYPE_ADDRESS) {
-					obj.point = 0;
-				} else if (item1.type === constants.ANSWER_TYPE_DIGIT) {
-
-					let percentageQuestion = await Question.findAll({
-						raw: true,
-						where: {
-							id: obj.question_id,
-							//   is_dependent: 1,
-							is_percentage_calculation: 1,
-							status: 1,
-						}
-					})
-
-					if (percentageQuestion.length > 0) {
-						let dependedObj = answersArray.find(o => o.id === percentageQuestion[0].dependent_question_id);
-
-						let totalCount = dependedObj.answer;
-						let count = item1.answer;
-						let percentage = (count / totalCount) * 100;
-						percentage = Math.round(percentage);
-						let gradeObj = await PercentageConfiguarationSlab.findAll({
-							where: {
-								start_value: {
-									[Op.lte]: percentage
-								},
-								end_value: {
-									[Op.gte]: percentage
-								},
-								status: 1
-							}
-						})
-
-						obj.point = gradeObj[0].point;
-						points = points + obj.point;
-					} else {
-						obj.point = 0;
-					}
-
-				} else if (item1.type === constants.ANSWER_TYPE_TEXT) {
-					obj.point = 0;
-				}
-				obj.status = 1;
-				answerAllArray.push(obj);
-			}));
-
-			let surveyUpdate = await Survey.update({
-				points: points
-			}, {
-				where: {
-					id: surveyObj.id
-				}
-			})
-				.catch(err => {
-					return res.send({
-						success: 0,
-						message: 'Something went wrong while updating survey data',
-						error: err
-					})
-				})
-
-			let surveyAnswerArray = await SurveyAnswer.bulkCreate(answerAllArray)
-				.catch(err => {
-					return res.send({
-						success: 0,
-						message: 'Something went wrong while fetching answer data',
-						error: err
-					})
-				})
-			return res.status(200).send({
-				success: 1,
-				message: "Survey attended Successfully."
-			});
-			// await Promise.all(attendedSurveys.map(async (item) => {
-			//    let informerName =  item.informerName;
-			//    let informerPhone =  item.informerPhone;
-			//    let officeName = item.officeName;
-			//    msg91.send(informerPhone, `Dear ${informerName}, Harithakeralam survey for ${officeName} has been completed successfully. Thank you for your coperation with us.`, function (err, response) {
-			//   });
-			// }));
-
-
+		this.attendSurvey = async function (req, res) { 
+			console.log("Files recieved are: "+JSON.stringify(req.files));
+			res.send({ok:true});
 		},
 
 		this.mainSurveyCommonDetails = async (req, res) => {

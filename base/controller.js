@@ -1,5 +1,5 @@
 const stringify = require('json-stringify-safe');
-var multer = require('multer'); 
+var multer = require('multer');  
 module.exports = function(name,app,config) { 
     const jwt = require('jsonwebtoken');
     this.options = {auth:true};
@@ -63,29 +63,29 @@ module.exports = function(name,app,config) {
         //console.log(`app.${method}('${path}',fn)`);
 
 
-        app.use(path, function(req,res,next) { 
-            var params = req.params;
-            authHandler(path,params,req,res,next);
-            //console.log("Req params are "+JSON.stringify(req.params));
-        });
-        app[method](path,fn);
-
-
-        // var param2 = function(req,res,next) { 
+        // app.use(path, function(req,res,next) { 
         //     var params = req.params;
-        //     authHandler(path,params,req,res,next); 
+        //     authHandler(path,params,req,res,next);
         //     //console.log("Req params are "+JSON.stringify(req.params));
-        //  }; 
-        //  var param3 = null; 
-        //  if(options.multer) { 
-        //      param3 = param2;
-        //      param2 = (options.multer)(multer); 
-        //      app.use(path, param2, param3 ); 
-        //      app[method](path, param2, param3); 
-        //  } else{
-        //     app.use(path, param2 ); 
-        //     app[method](path, param2); 
-        //  }
+        // });
+        // app[method](path,fn);
+
+
+        var param2 = function(req,res,next) { 
+            var params = req.params;
+            authHandler(path,params,req,res,next); 
+            //console.log("Req params are "+JSON.stringify(req.params));
+         }; 
+         var param3 = null; 
+         if(!options.multer) { 
+            app.use(path, param2 ); 
+            app[method](path, fn); 
+         } else{
+            param3 = param2;
+            param2 = (options.multer)(multer); 
+            app.use(path, param2, param3 ); 
+            app[method](path, param2, fn); 
+         }
     };
    // app.use(authHandler);
     function authHandler(path, params, req, res, next){  
@@ -102,11 +102,15 @@ module.exports = function(name,app,config) {
         }
         path  = path.replace(/\/\//g, "/");
         console.log("path is "+ path);
+        console.log("Req path is "+ req.path);
+        var pathPart = req.path;
+       // var pathRule = pathPart.replace(/[^\\]/gi,"");
         var method =  req.method.toLowerCase();
         var noAuthActions  =  that.actionsWithoutAuth[method]?that.actionsWithoutAuth[method]:[];
         console.log("No auth actions are...");
         //console.log("Path is "+path);
         console.log(noAuthActions);
+        console.log("Path: for "+req.id+" - "+JSON.stringify(req.params));
         if(noAuthActions.indexOf(path) != -1) {
             //console.log("Path does not require authorization...");
             next.call();
