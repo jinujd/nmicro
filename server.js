@@ -19,8 +19,7 @@ const Sequelize = require('sequelize');
 const mongoose = require('mongoose');
 const Controller = require('./base/controller.js');
 
-var sequelize = null;
-var mongoose = null;
+var sequelize = null; 
 //jwttoken and verification
 
 
@@ -36,8 +35,9 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 module.exports = {
   connectToDb: function(callback) {  
+    var that = this;
     this.connectToMysqlDb(dbConfig.sql,function(sequelize){
-      this.connectToMongoDb(dbConfig.mongo, function(mongoose) {
+      that.connectToMongoDb(dbConfig.mongo, function(mongoose) {
         callback({
             sequelize:sequelize,
             mongoose: mongoose
@@ -54,28 +54,31 @@ connectToMysqlDb: function (dbConfig,callback) {
  sequelize
    .authenticate()
    .then(() => {
-     console.log('Connected to sql.');
+     console.log('Connected to sql');
      if (callback) {
        callback(sequelize);
      }
    })
    .catch(err => {
-     console.error('Unable to connect to the database:', err);
+     console.error('Unable to connect to sql database:', err);
      process.exit();
    });
 },
-connectToMongoDb: function(dbConfig, callback) {
+connectToMongoDb: function(dbConfig, callback) { 
   if(!dbConfig) {
     (callback).call();
     return;
   } 
-  mongoose.connect(dbConfig.url, dbConfig).then(() => {
-    console.log("Successfully connected to the database");
+  var config = dbConfig;
+  var url = config.url;
+  delete config.url; 
+  mongoose.connect(url, config).then(() => {
+    console.log("Connected to mongodb");
     if (callback) {
-      callback();
+      (callback.call)(null,mongoose);
     }
   }).catch(err => {
-    console.log('Could not connect to the database. Exiting now...', err);
+    console.log('Could not connect to mongodb. Exiting now...', err);
     process.exit();
   });
 },
@@ -101,12 +104,13 @@ connectToMongoDb: function(dbConfig, callback) {
       return controller;
     }
   },
-  start: function (serviceName, routes) {
+  start: function (serviceName, routes, servicePort) {
     var that = this;
     this.connectToDb(function (db) {
       var options = db;
       var port = process.env.port ? process.env.port : null;
       port = port ? port : argv.port ? argv.port : null;
+      port = port? port : servicePort;
       if (!port) {
         console.log("PORT not set for " + serviceName + " service");
 

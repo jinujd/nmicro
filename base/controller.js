@@ -12,9 +12,18 @@ module.exports = function(name,app,config) {
        // //console.log("Options in get is "+JSON.stringify(options));
         this.registerRoute('get',path,fn,options);
     };
-    this.loadModel =  function(model) {
-        var path  = '../app/models/'+model+'.model.js';
-        var model = require(path)(config.options.sequelize);
+    this.loadModel =  function(modelName) { 
+        var isMongooseModel = modelName.endsWith('.mongoose');
+        var path  = '../app/models/'+modelName+'.model.js'; 
+        if(!config.options.mongoose) {
+            console.log("Mongoose is empty..");
+        }
+        var connector = isMongooseModel?config.options.mongoose:config.options.sequelize;
+       
+        var model = connector?require(path)(connector):null;
+        if(!model) {
+            console.log("Failed to load model "+modelName);
+        }
         return model;
     };
     this.post = function(path,fn,options) {
