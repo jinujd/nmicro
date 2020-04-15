@@ -118,21 +118,22 @@ connectToMongoDb: function(dbConfig, callback) {
       return controller;
     }
   },
-  start: function (serviceName, routes, servicePort,serviceConfig) {
+  start: function (serviceName, routes,serviceConfig) {
 
+
+    if(!serviceConfig) {
+      serviceConfig = { };
+    }
 
     var port = process.env.port ? process.env.port : null;
     port = port ? port : argv.port ? argv.port : null;
-    port = port? port : servicePort;
+    port = port? port : serviceConfig.port;
     if (!port) {
       console.error("PORT not set for " + serviceName + " service. Exiting...");
 
       process.exit(0);
     }
 
-    if(!serviceConfig) {
-      serviceConfig = { };
-    }
     if(!serviceConfig.db) {
       serviceConfig.db = "database.config";
     }

@@ -16,7 +16,7 @@ module.exports = {
         idle: 10000
       } 
     },
-    mongo: 
+    mosngo: 
       { 
         url:"mongodb+srv://root:root@cluster0-mwmnq.mongodb.net/test?retryWrites=true&w=majority",
         useNewUrlParser: true,
