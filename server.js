@@ -107,7 +107,7 @@ connectToMongoDb: function(dbConfig, callback) {
       var controllerBaseObj = new Controller(controller, app, config);
 
       var path = './app/controllers/' + controller + ".controller.js";
-      console.log("Loading controller " + path);
+      console.debug("Loading controller " + path);
       var controller = require(path);
       controller = new controller(controllerBaseObj, options);
 
@@ -142,9 +142,9 @@ connectToMongoDb: function(dbConfig, callback) {
     }
  
     dbConfig = loadConfigForEnv(serviceConfig.db,env);
-    params = loadConfigForEnv(serviceConfig.app,env); 
+    params = loadConfigForEnv(serviceConfig.app,env);  
     var gatewayConfig = params.gateway?params.gateway:{url:""};
-    gateway = require('./app/components/gateway.component')(params);
+    gateway = require('./app/components/gateway.component')(gatewayConfig);
      
     var that = this;
     this.connectToDb(function (db) {
@@ -155,7 +155,7 @@ connectToMongoDb: function(dbConfig, callback) {
         var route = null;
         while (i < len) {
           route = routes[i];
-          console.log("Loading route " + route);
+          console.debug("Loading route " + route);
           require('./app/routes/' + route + '.routes.js')(app, that.methods, options);
           i++;
         }
