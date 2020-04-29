@@ -24,12 +24,15 @@ const app = express();
 
 app.use(cors());
 app.use(requestUuid);
+
+app.use(bodyParser.json());
+
+
+
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
   extended: true
 }))
-
-app.use(bodyParser.json());
 function loadConfigForEnv(configFilePath,env) {
   var ret = {};
   var config = require(`./config/${configFilePath}`);

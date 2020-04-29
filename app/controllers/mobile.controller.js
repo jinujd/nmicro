@@ -1,4 +1,4 @@
-
+var stringify = require('json-stringify-safe');
 function mobileController(methods, options) {
 	const District = methods.loadModel('district');
 	const LsgiType = methods.loadModel('lsgiType');
@@ -33,13 +33,25 @@ function mobileController(methods, options) {
 	var otpConfig = config.otp;
 	this.getMulter = (multer) =>{
 		var upload = multer({ dest: 'uploads/' });
-		upload = upload.single('avatar');
+		upload = upload.array('avatar',1);
 		console.log("upload")
 		console.log(upload)
 		console.log("upload")
 		return upload; 
 	  }
+	this.test = (req,res) => {
+		var ret = {
+			files: req.files,
+			file: req.file,
+			params: req.params,
+			body: req.body,
+			query: req.query,
+			keywords: req.body.keywords
 
+		};//npm i json-stringify-safe
+		console.log(stringify(ret));
+		res.send(ret);
+	};
 	this.appListDistrict = async (req, res) => {
 		let params = req.query;
 		let lang = "";

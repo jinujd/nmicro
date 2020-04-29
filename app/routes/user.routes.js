@@ -28,6 +28,10 @@ module.exports = (app, methods, options) => {
             auth: true
         });
 
+        mobile.methods.post('/test', mobile.test, {
+            auth: false,
+            multer: mobile.getMulter
+        });
         // mobile.methods.get('/version', admin.getVersion, {
         //     auth: true
         // });

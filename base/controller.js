@@ -1,6 +1,7 @@
 const stringify = require('json-stringify-safe');
-var multer = require('multer');  
-module.exports = function(name,app,config) { 
+var multer = require('multer'); 
+module.exports = function(name,app,config) {
+    
     const jwt = require('jsonwebtoken');
     this.options = {auth:true};
     var that = this;
@@ -11,16 +12,9 @@ module.exports = function(name,app,config) {
        // //console.log("Options in get is "+JSON.stringify(options));
         this.registerRoute('get',path,fn,options);
     };
-    this.loadModel =  function(modelName) { 
-        var isMongooseModel = modelName.endsWith('.mongoose');
-        var path  = '../app/models/'+modelName+'.model.js'; 
-         
-        var connector = isMongooseModel?config.options.mongoose:config.options.sequelize;
-       
-        var model = connector?require(path)(connector):null;
-        if(!model) {
-            console.warn("Failed to load model "+modelName);
-        }
+    this.loadModel =  function(model) {
+        var path  = '../app/models/'+model+'.model.js';
+        var model = require(path)(config.options.sequelize);
         return model;
     };
     this.post = function(path,fn,options) {
@@ -47,9 +41,7 @@ module.exports = function(name,app,config) {
         }
         options = options?options:this.options;
         //console.log("Options received: "+JSON.stringify(options));
-
         var path = options.useAbsolutePath?path:"/"+name+`/${path}`;
-
         //console.log("Options  is "+JSON.stringify(options));
         path  = path.replace(/\/\//g, "/");
         if(!options.auth) {
@@ -61,16 +53,12 @@ module.exports = function(name,app,config) {
             //console.log("Authorization is needed");
         }
         //console.log(`app.${method}('${path}',fn)`);
-
-
         // app.use(path, function(req,res,next) { 
         //     var params = req.params;
         //     authHandler(path,params,req,res,next);
         //     //console.log("Req params are "+JSON.stringify(req.params));
         // });
         // app[method](path,fn);
-
-
         var param2 = function(req,res,next) { 
             var params = req.params;
             authHandler(path,params,req,res,next); 
@@ -81,10 +69,17 @@ module.exports = function(name,app,config) {
             app.use(path, param2 ); 
             app[method](path, fn); 
          } else{
+             console.log("here1111111111111111111111111")
             param3 = param2;
             param2 = (options.multer)(multer); 
-            app.use(path, param2, param3 ); 
-            app[method](path, param2, fn); 
+            app[method](path, param2, function(req,res,next) { 
+                var params = req.params;
+                authHandler(path,params,req,res,function() { 
+                    fn.call(null,req,res,next);
+                }); 
+                //
+            }); 
+            //app.use(path, param2, param3 ); // for authorization
          }
     };
    // app.use(authHandler);
@@ -102,15 +97,11 @@ module.exports = function(name,app,config) {
         }
         path  = path.replace(/\/\//g, "/");
         console.log("path is "+ path);
-        console.log("Req path is "+ req.path);
-        var pathPart = req.path;
-       // var pathRule = pathPart.replace(/[^\\]/gi,"");
         var method =  req.method.toLowerCase();
         var noAuthActions  =  that.actionsWithoutAuth[method]?that.actionsWithoutAuth[method]:[];
         console.log("No auth actions are...");
         //console.log("Path is "+path);
         console.log(noAuthActions);
-        console.log("Path: for "+req.id+" - "+JSON.stringify(req.params));
         if(noAuthActions.indexOf(path) != -1) {
             //console.log("Path does not require authorization...");
             next.call();
