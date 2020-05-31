@@ -1,4 +1,5 @@
 module.exports = {
+  /*
   development: {
     sql: {
       // database: 'suchitwa',
@@ -36,5 +37,5 @@ module.exports = {
       password: 'Projects@2019.com'
     }
   }
-
+  */
 }

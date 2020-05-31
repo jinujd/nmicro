@@ -1,7 +1,12 @@
 const stringify = require('json-stringify-safe');
 var multer = require('multer'); 
 module.exports = function(name,app,config) {
-    
+    this.getKebabCasedNameFromCamelCasedName = (camelCasedName) => {
+        return camelCasedName.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+    };
+    this.name = name;
+    this.camelCasedName = name;
+    this.kebabCasedName = this.getKebabCasedNameFromCamelCasedName(name); 
     const jwt = require('jsonwebtoken');
     this.options = {auth:true};
     var that = this;
@@ -27,13 +32,14 @@ module.exports = function(name,app,config) {
         this.registerRoute('patch',path,fn,options);
     };
     this.registerRoute = function(method,path,fn,options) {
+        var kebabCasedName = this.kebabCasedName;
         //console.log("\\n\\n\\n\\n\\n\\n\\nCalling n");
         path  = path.replace(/\/\//g, "/");
         //console.log("Registering route "+method.toUpperCase()+" "+path+" with options "+JSON.stringify(options));
         if(!fn) {
             //console.log("Unable to register route "+method.toUpperCase()+" "+path+", callback function is undefined...");
             return;
-        }
+        };
         var methods = ["get","post","put","patch","delete","head"];
         if(methods.indexOf(method) == -1) {
             //console.log("Invalid method "+method+" passed to registerRoute. Available methods are "+methods);
@@ -41,7 +47,7 @@ module.exports = function(name,app,config) {
         }
         options = options?options:this.options;
         //console.log("Options received: "+JSON.stringify(options));
-        var path = options.useAbsolutePath?path:"/"+name+`/${path}`;
+        var path = options.useAbsolutePath?path:"/"+kebabCasedName+`/${path}`;
         //console.log("Options  is "+JSON.stringify(options));
         path  = path.replace(/\/\//g, "/");
         if(!options.auth) {
@@ -68,8 +74,7 @@ module.exports = function(name,app,config) {
          if(!options.multer) { 
             app.use(path, param2 ); 
             app[method](path, fn); 
-         } else{
-             console.log("here1111111111111111111111111")
+         } else{ 
             param3 = param2;
             param2 = (options.multer)(multer); 
             app[method](path, param2, function(req,res,next) { 
@@ -79,13 +84,13 @@ module.exports = function(name,app,config) {
                 }); 
                 //
             }); 
+            console.log("Path: "+path);
             //app.use(path, param2, param3 ); // for authorization
          }
     };
    // app.use(authHandler);
     function authHandler(path, params, req, res, next){  
-        //console.log(JSON.stringify(req.params)); 
-        console.log("Path is "+path);
+        //console.log(JSON.stringify(req.params));  
         var route = app.route(path);
         if(route && route.path) {
             path = route.path;

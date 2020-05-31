@@ -1,38 +1,6 @@
-module.exports = (app, methods, options) => {
-    const admin = methods.loadController('admin', options);
-    const mobile = methods.loadController('mobile', options);
+module.exports = (app, methods, options) => { 
+    const mobile = methods.loadController('mobileApp', options);
+    //const mobile1 = methods.loadController('mobileApp1', options);
 
-    mobile.methods.post('/users/login',mobile.login, {auth:false});
-
-    mobile.methods.post('/users/send-otp',mobile.sendOtp, {auth:false});
-    mobile.methods.post('/users/validate-otp',mobile.validateOtp, {auth:false});
-    mobile.methods.patch('/users/reset-password',mobile.resetPassword, {auth:false});
-
-        //categoryFacilitySurveyQuestion
-
-        mobile.methods.post('/facility-surveys', mobile.attendFacilitySurvey, {
-            auth: true
-        });
-
-        mobile.methods.post('/facility-surveys/common-details', mobile.facilitySurveyCommonDetails, {
-            auth: true
-        });
-       
-        mobile.methods.post('/main-surveys/:id', mobile.attendSurvey, {
-            auth: true, 
-        });
-        mobile.methods.post('/main-surveys', mobile.attendSurvey, {
-            auth: false,  
-        });
-        mobile.methods.post('/main-surveys/common-details', mobile.mainSurveyCommonDetails, {
-            auth: true
-        });
-
-        mobile.methods.post('/test', mobile.test, {
-            auth: false,
-            multer: mobile.getMulter
-        });
-        // mobile.methods.get('/version', admin.getVersion, {
-        //     auth: true
-        // });
+    mobile.methods.post('/users/test',mobile.test, {auth:false,multer:mobile.getMulter}); 
 }

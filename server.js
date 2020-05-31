@@ -4,6 +4,7 @@ var cors = require('cors');
 const bodyParser = require('body-parser');
 var consoleArguments = require('minimist');
 var argv = consoleArguments(process.argv.slice(2));
+const fs = require("fs");
 // Configuring the database
 var env = process.env.NODE_ENV;
 env = env ? env : "development";
@@ -113,8 +114,19 @@ connectToMongoDb: function(dbConfig, callback) {
 
       var path = './app/controllers/' + controller + ".controller.js";
       console.debug("Loading controller " + path);
+      if (!fs.existsSync(path)) {
+        // Do something
+        console.error("Controller file with name "+controller+".controller.js does not exits");
+        var ret = new function() {
+         this.methods = controllerBaseObj
+        };
+        return ret;
+      }
       var controller = require(path);
+    
       controller = new controller(controllerBaseObj, options);
+      var cName =  controller.name;
+      console.log(JSON.stringify(cName));
 
 
 

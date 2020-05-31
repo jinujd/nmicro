@@ -1,5 +1,5 @@
 module.exports = {
-  development: {
+ /* development: {
     sql: {
       // database: 'suchitwa',
       // username: 'postgres',
@@ -36,5 +36,5 @@ module.exports = {
       password: 'Projects@2019.com'
     }
   }
-
+*/
 }
