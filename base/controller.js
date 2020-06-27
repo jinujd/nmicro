@@ -35,7 +35,12 @@ module.exports = function(name,app,config,moduleName) {
         this.registerRoute('get',path,fn,options);
     };
     this.loadModel =  function(model) {
-        var path  = '../app/models/'+model+'.model.js';
+        var path  = `../app/models/${model}.model.js`;
+
+         
+        if(this.moduleName) {
+            path = `../app/modules/${this.moduleName}/models/${model}.model.js`;
+        } 
         var model = require(path)(config.options.sequelize);
         return model;
     };
@@ -76,15 +81,15 @@ module.exports = function(name,app,config,moduleName) {
            //console.log("Path is "+path);
            path = `${pathPrefix}${path}`;
         }
-        //console.log("Path being registered is "+path);
+        console.log("Path being registered is "+path);
         //var path = options.useAbsolutePath?path:`/${kebabCasedModuleName}/${kebabCasedName}/${path}`;
         //console.log("Options  is "+JSON.stringify(options));
         path  = path.replace(/\/\//g, "/");
         if(!options.auth) {
-            //console.log("Authorization not needed");
+            console.log("Authorization not needed");
             this.actionsWithoutAuth[method] = !this.actionsWithoutAuth[method]?[]:this.actionsWithoutAuth[method];
             this.actionsWithoutAuth[method].push(path);
-            //console.log(this.actionsWithoutAuth);
+            console.log(this.actionsWithoutAuth);
         } else {
             //console.log("Authorization is needed");
         }
@@ -137,9 +142,9 @@ module.exports = function(name,app,config,moduleName) {
         //console.log("path is "+ path);
         var method =  req.method.toLowerCase();
         var noAuthActions  =  that.actionsWithoutAuth[method]?that.actionsWithoutAuth[method]:[];
-        //console.log("No auth actions are...");
+        console.log("No auth actions are...");
         //console.log("Path is "+path);
-        //console.log(noAuthActions);
+        console.log(noAuthActions);
         if(noAuthActions.indexOf(path) != -1) {
             //console.log("Path does not require authorization...");
             next.call();

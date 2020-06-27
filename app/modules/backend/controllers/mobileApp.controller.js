@@ -14,6 +14,7 @@ function mobileAppController(methods, options) {
 	  }
 	this.test = (req,res) => {
 		const Joi = require('joi');
+		this.methods.loadModel('authPermission1');
  
 		const schema = Joi.object().keys({
 			username: Joi.string().alphanum().min(3).max(30).required(),

@@ -239,8 +239,13 @@ connectToMongoDb: function(dbConfig, callback) {
         var route = null;
         while (i < len) {
           route = routes[i];
-          console.debug("Loading route " + route);
-          require('./app/routes/' + route + '.routes.js')(app, that.methods, options);
+          console.debug("Loading route " + route); 
+          var routeFile = `./app/routes/${route}.routes.js`;
+          if(CURRENT_MODULE) {
+            routeFile = `./app/modules/${CURRENT_MODULE}/routes/${route}.routes.js`;
+          }
+          require(routeFile)(app, that.methods, options);
+
           i++;
         }
         app.listen(port, () => {

@@ -4,5 +4,11 @@ module.exports = (app, methods, options) => {
 
     mobile.methods.patch('/users/test',mobile.test, {
         auth:false, 
+        validations: {
+            email: ['required','email'],
+            allowed:[],
+            
+
+        }
     });  
 }
