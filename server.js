@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 var consoleArguments = require('minimist');
 var argv = consoleArguments(process.argv.slice(2));
 const fs = require("fs");
+const path = require('path');
 // Configuring the database
 var env = process.env.NODE_ENV;
 env = env ? env : "development";
@@ -28,12 +29,48 @@ app.use(requestUuid);
 
 app.use(bodyParser.json());
 
+var CURRENT_WORKING_DIR = process.cwd();
+var APP_DIR = "./app/";
+var CURRENT_MODULE =  getCurrentModule(); //null or name of the module
+const PATH_SEPARATOR =  path.sep; 
 
-
+CURRENT_WORKING_DIR += CURRENT_WORKING_DIR.endsWith("/") ? "" : "/";
+ 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
   extended: true
-}))
+}));
+function getCurrentModule() {
+  var tmp  = CURRENT_WORKING_DIR.split("\\");
+  var index = tmp.length-2;
+  var ret = null;
+  if(index && (tmp[index] == "modules")) {
+    ret = tmp[index+1];
+  } 
+  return ret;
+}
+function sanitizePath(str) {
+   //str += str.endsWith(PATH_SEPARATOR) ? "" : PATH_SEPARATOR;
+   str =  str.replace(/\\/g,"/");
+   str += str.endsWith("/") ? "" : "/";
+   return str;
+}
+function getFileFromPaths(paths, file) { 
+  var ret = null;
+  var i = 0;
+  var ln = paths.length; 
+  var path = null;
+  while(i<ln) {
+    path = paths[i]; 
+    path = sanitizePath(path);
+    path += file; 
+    if (fs.existsSync(path)) { 
+      ret = path;
+    }  
+    i++;
+  }
+  return ret;
+}
 function loadConfigForEnv(configFilePath,env) {
   var ret = {};
   var config = require(`./config/${configFilePath}`);
@@ -46,6 +83,27 @@ function loadConfigForEnv(configFilePath,env) {
     }
     config = config[env];
     return config;
+}
+function getLookUpPathForItem(item) {//item => controller or model etc.
+  var ret = [
+    APP_DIR+item+"/",
+  ]; 
+  if(CURRENT_MODULE) {
+    ret.push("./"+item+"/");
+  }
+  ret = removeDuplicates(ret); 
+  return ret;
+}
+function removeDuplicates(arr) {
+  var obj = {};
+  var retArr = [];
+  for (var i = 0; i < arr.length; i++) {
+      obj[arr[i]] = true;
+  }
+  for (var key in obj) {
+      retArr.push(key);
+  }
+  return retArr;
 }
 module.exports = {
   connectToDb: function(callback) {  
@@ -100,6 +158,7 @@ connectToMongoDb: function(dbConfig, callback) {
   });
 },
   methods: {
+    
     loadController: function (controller, options) {
       var defaultJWTSecret = "myapp";
       var defaultJWTConfig =  {
@@ -112,21 +171,28 @@ connectToMongoDb: function(dbConfig, callback) {
       config.options = options;
       var controllerBaseObj = new Controller(controller, app, config);
 
-      var path = './app/controllers/' + controller + ".controller.js";
-      console.debug("Loading controller " + path);
-      if (!fs.existsSync(path)) {
-        // Do something
+      var cpath = './app/controllers/' + controller + ".controller.js";
+      var pathsToCheck = getLookUpPathForItem("controllers");
+       
+      var controllerFileName =  controller + ".controller.js";
+      var cpath = getFileFromPaths(pathsToCheck,controllerFileName);
+      if(!cpath) { 
         console.error("Controller file with name "+controller+".controller.js does not exits");
         var ret = new function() {
          this.methods = controllerBaseObj
         };
         return ret;
+      } 
+      var pathToRequire = `./app/controllers/${controllerFileName}`;
+      if(CURRENT_MODULE) {
+        var pathToRequire = `./app/modules/${CURRENT_MODULE}/controllers/${controllerFileName}`;
       }
-      var controller = require(path);
+       
+      var controller = require(pathToRequire);
     
       controller = new controller(controllerBaseObj, options);
       var cName =  controller.name;
-      console.log(JSON.stringify(cName));
+      //console.log(JSON.stringify(cName));
 
 
 

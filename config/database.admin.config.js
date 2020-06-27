@@ -1,6 +1,6 @@
 module.exports = {
- /* development: {
-    sql: {
+  development: {
+    sql1: {
       // database: 'suchitwa',
       // username: 'postgres',
       // password: 'suchitwa'
@@ -16,16 +16,16 @@ module.exports = {
         idle: 10000
       } 
     },
-    mosngo: 
+    mongo: 
       { 
-        url:"mongodb+srv://root:root@cluster0-mwmnq.mongodb.net/test?retryWrites=true&w=majority",
+        url:"mongodb+srv://jinu:NcdmMmlTVnTfLGnn@cluster0-mwmnq.mongodb.net/test?retryWrites=true&w=majority",
         useNewUrlParser: true,
         useUnifiedTopology: true
   
       }
     
 
-  },
+  },/*
   qa: {
     sql: {
       // database: 'suchitwa',

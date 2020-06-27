@@ -1,5 +1,6 @@
 const stringify = require('json-stringify-safe');
 var multer = require('multer'); 
+const Joi = require('joi');
 module.exports = function(name,app,config) {
     this.getKebabCasedNameFromCamelCasedName = (camelCasedName) => {
         return camelCasedName.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
@@ -31,6 +32,7 @@ module.exports = function(name,app,config) {
     this.patch = function(path,fn,options) {
         this.registerRoute('patch',path,fn,options);
     };
+    
     this.registerRoute = function(method,path,fn,options) {
         var kebabCasedName = this.kebabCasedName;
         //console.log("\\n\\n\\n\\n\\n\\n\\nCalling n");
@@ -65,8 +67,7 @@ module.exports = function(name,app,config) {
         //     //console.log("Req params are "+JSON.stringify(req.params));
         // });
         // app[method](path,fn);
-        var param2 = function(req,res,next) { 
-            var params = req.params;
+        var param2 = function(req,res,next) {  
             authHandler(path,params,req,res,next); 
             //console.log("Req params are "+JSON.stringify(req.params));
          }; 
@@ -86,6 +87,9 @@ module.exports = function(name,app,config) {
             }); 
             console.log("Path: "+path);
             //app.use(path, param2, param3 ); // for authorization
+         }
+         if(options.validators) {
+            console.log("Validators received...");
          }
     };
    // app.use(authHandler);
