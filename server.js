@@ -169,7 +169,7 @@ connectToMongoDb: function(dbConfig, callback) {
       config.jwt.secret = config.jwt.secret?config.jwt.secret: defaultJWTSecret;
        
       config.options = options;
-      var controllerBaseObj = new Controller(controller, app, config);
+      var controllerBaseObj = new Controller(controller, app, config,CURRENT_MODULE);
 
       var cpath = './app/controllers/' + controller + ".controller.js";
       var pathsToCheck = getLookUpPathForItem("controllers");
@@ -198,6 +198,7 @@ connectToMongoDb: function(dbConfig, callback) {
 
       controller.methods = controllerBaseObj;
       controller.options = options;
+      controller.module = CURRENT_MODULE;
       return controller;
     }
   },

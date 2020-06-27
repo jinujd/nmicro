@@ -1,13 +1,29 @@
 const stringify = require('json-stringify-safe');
 var multer = require('multer'); 
 const Joi = require('joi');
-module.exports = function(name,app,config) {
+module.exports = function(name,app,config,moduleName) {
     this.getKebabCasedNameFromCamelCasedName = (camelCasedName) => {
-        return camelCasedName.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+        var kebabCasedName = null;
+        //console.log(camelCasedName +" is the camel cased name");
+        kebabCasedName = camelCasedName?camelCasedName.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase():kebabCasedName;
+        
+        if(kebabCasedName) {
+            var firstCharInCamelCasedName = camelCasedName[0];
+            firstCharInCamelCasedName = firstCharInCamelCasedName?firstCharInCamelCasedName.toLowerCase():firstCharInCamelCasedName;
+
+            var firstCharInKebabCasedName = kebabCasedName[0]; 
+            firstCharInKebabCasedName = firstCharInKebabCasedName?firstCharInKebabCasedName.toLowerCase():firstCharInKebabCasedName;
+             
+            if(firstCharInCamelCasedName != firstCharInKebabCasedName ) // some times the camelcased name  starts with -. So no need to remove that
+                kebabCasedName = kebabCasedName.replace(/^-+|-+$/g, ''); // after replacement happened above using regex, an unwanted - is getting added as prefix. To remove that
+        } 
+        return kebabCasedName;
     };
     this.name = name;
+    this.moduleName = moduleName;
     this.camelCasedName = name;
     this.kebabCasedName = this.getKebabCasedNameFromCamelCasedName(name); 
+    this.kebabCasedModuleName = this.getKebabCasedNameFromCamelCasedName(moduleName); 
     const jwt = require('jsonwebtoken');
     this.options = {auth:true};
     var that = this;
@@ -35,9 +51,10 @@ module.exports = function(name,app,config) {
     
     this.registerRoute = function(method,path,fn,options) {
         var kebabCasedName = this.kebabCasedName;
+        var kebabCasedModuleName = this.kebabCasedModuleName;
         //console.log("\\n\\n\\n\\n\\n\\n\\nCalling n");
         path  = path.replace(/\/\//g, "/");
-        //console.log("Registering route "+method.toUpperCase()+" "+path+" with options "+JSON.stringify(options));
+       // console.log("Registering route "+method.toUpperCase()+" "+path+" with options "+JSON.stringify(options));
         if(!fn) {
             //console.log("Unable to register route "+method.toUpperCase()+" "+path+", callback function is undefined...");
             return;
@@ -49,7 +66,18 @@ module.exports = function(name,app,config) {
         }
         options = options?options:this.options;
         //console.log("Options received: "+JSON.stringify(options));
-        var path = options.useAbsolutePath?path:"/"+kebabCasedName+`/${path}`;
+        if(!options.useAbsolutePath) {
+           var pathPrefix = `${kebabCasedName}`;
+           if(kebabCasedModuleName) {
+            pathPrefix = `${kebabCasedModuleName}/${pathPrefix}`;
+           }
+           pathPrefix = `/${pathPrefix}`;
+           //console.log("Path prefix is "+pathPrefix);
+           //console.log("Path is "+path);
+           path = `${pathPrefix}${path}`;
+        }
+        //console.log("Path being registered is "+path);
+        //var path = options.useAbsolutePath?path:`/${kebabCasedModuleName}/${kebabCasedName}/${path}`;
         //console.log("Options  is "+JSON.stringify(options));
         path  = path.replace(/\/\//g, "/");
         if(!options.auth) {
@@ -68,6 +96,7 @@ module.exports = function(name,app,config) {
         // });
         // app[method](path,fn);
         var param2 = function(req,res,next) {  
+            var params = req.params;
             authHandler(path,params,req,res,next); 
             //console.log("Req params are "+JSON.stringify(req.params));
          }; 
@@ -105,12 +134,12 @@ module.exports = function(name,app,config) {
             return;
         }
         path  = path.replace(/\/\//g, "/");
-        console.log("path is "+ path);
+        //console.log("path is "+ path);
         var method =  req.method.toLowerCase();
         var noAuthActions  =  that.actionsWithoutAuth[method]?that.actionsWithoutAuth[method]:[];
-        console.log("No auth actions are...");
+        //console.log("No auth actions are...");
         //console.log("Path is "+path);
-        console.log(noAuthActions);
+        //console.log(noAuthActions);
         if(noAuthActions.indexOf(path) != -1) {
             //console.log("Path does not require authorization...");
             next.call();
@@ -119,7 +148,7 @@ module.exports = function(name,app,config) {
             if( Object.keys(req.params).length != 0 ) { 
 
             } else { 
-                console.log("Path parameters are not there");
+               // console.log("Path parameters are not there");
             }
         }
         const bearerHeader = req.headers['authorization'];
